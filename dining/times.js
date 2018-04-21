@@ -1,11 +1,11 @@
 const moment = require('moment');
-const momentDurationFormatSetup = require("moment-duration-format");
+const momentDurationFormatSetup = require('moment-duration-format');
 const common = require('./common');
 momentDurationFormatSetup(moment);
 
 const minutesAsHoursAndMinutes = (minutes) => {
-  const prettyPrintHoursAndMinutesFormat = "h [hours and] m [minutes]";
-  return moment.duration(minutes, "minutes").format(prettyPrintHoursAndMinutesFormat);
+  const prettyPrintHoursAndMinutesFormat = 'h [hours and] m [minutes]';
+  return moment.duration(minutes, 'minutes').format(prettyPrintHoursAndMinutesFormat);
 };
 
 const getOpenLocations = () => {
@@ -20,9 +20,9 @@ const getLocationHoursInfo = (locationName, time = moment()) => {
       name: locationName,
       isOpen: false,
       isClosedForEntireDay: true
-    }
+    };
   }
-  const { startTime, endTime } = locationTimes;
+  const {startTime, endTime} = locationTimes;
   console.log('start', startTime);
   console.log('current time', time);
   console.log('end', endTime);
@@ -35,12 +35,14 @@ const getLocationHoursInfo = (locationName, time = moment()) => {
     openTime: startTime.format(common.HOUR_MINUTE_FORMAT),
     closeTime: endTime.format(common.HOUR_MINUTE_FORMAT),
     isClosedForEntireDay: false
-  }
+  };
 };
 
 const isOpen = (location, time) => {
   const locationTimes = common.getStartAndEndTimeForToday(location.hours);
-  if (!locationTimes) return false;
+  if (!locationTimes) {
+    return false;
+  }
   return time.isBetween(locationTimes.startTime, locationTimes.endTime);
 };
 
@@ -83,7 +85,7 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
       });
       return;
     }
-    const { isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay } = getLocationHoursInfoFromRequest(req);
+    const {isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
       responseText = `Yes, but it's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
@@ -98,7 +100,7 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     }
     res.json({
       fulfillment_text: responseText
-    })
+    });
   },
 
   'isclosed': (req, res) => {
@@ -109,7 +111,7 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
       });
       return;
     }
-    const { isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay } = getLocationHoursInfoFromRequest(req);
+    const {isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
       responseText = `No, but it's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
@@ -124,11 +126,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     }
     res.json({
       fulfillment_text: responseText
-    })
+    });
   },
 
   'whenislocationopen': (req, res) => {
-    const { name, isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay } = getLocationHoursInfoFromRequest(req);
+    const {name, isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     const hoursString = `The hours are ${openTime}-${closeTime}`;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
@@ -144,11 +146,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     }
     res.json({
       fulfillment_text: responseText
-    })
+    });
   },
 
   'whenislocationclosed': (req, res) => {
-    const { name, isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay } = getLocationHoursInfoFromRequest(req);
+    const {name, isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     const hoursString = `The hours are ${openTime}-${closeTime}`;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
@@ -159,16 +161,16 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
       responseText = `${name} is closed for the whole day.`;
     } else if (!isOpen) {
       responseText = `It's already closed but the hours are ${openTime}-${closeTime} today.`;
-    }  else {
+    } else {
       responseText = `It closes at ${closeTime} today. ${hoursString}`;
     }
     res.json({
       fulfillment_text: responseText
-    })
+    });
   },
 
   'hours': (req, res) => {
-    const { name, isClosedForEntireDay, openTime, closeTime } = getLocationHoursInfoFromRequest(req);
+    const {name, isClosedForEntireDay, openTime, closeTime} = getLocationHoursInfoFromRequest(req);
     let responseText;
     if (isClosedForEntireDay) {
       responseText = `${name} is closed for the entire day.`;

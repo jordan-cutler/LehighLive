@@ -1,4 +1,3 @@
-
 const moment = require('moment');
 const unirest = require('unirest');
 const parser = require('xml2json');
@@ -37,13 +36,13 @@ const nameToLocationObj = {
 };
 
 const ERROR_MESSAGES = {
-  MEAL_WEEK_NOT_FOUND: "Couldn't find a location with that name",
-  LOCATION_NOT_FOUND: "Couldn't find a location with that name"
+  MEAL_WEEK_NOT_FOUND: 'Couldn\'t find a location with that name',
+  LOCATION_NOT_FOUND: 'Couldn\'t find a location with that name'
 };
 
 const getItemsGroupedByStation = (location, meal, date) => {
   return generateMenuUrlByLocationAndDate(location, date).then(menuUrl => {
-    console.log('menuurl=',menuUrl);
+    console.log('menuurl=', menuUrl);
     return new Promise((resolve, reject) => {
       unirest('GET', menuUrl)
         .headers(REQUEST_HEADERS)
@@ -51,7 +50,7 @@ const getItemsGroupedByStation = (location, meal, date) => {
           const jsonText = parser.toJson(xmlData.body);
           const item = JSON.parse(jsonText)['VFPData']['weeklymenu'];
           const stations = getStations(date, meal, item);
-          console.log('stations=',stations);
+          console.log('stations=', stations);
           const itemsGroupedByStation = stations.map(station => {
             return {
               'title': station,
@@ -90,7 +89,7 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     if (!isOpenDuringPeriod(common.getRequestedLocationObject(location), meal)) {
       res.json({
         fulfillment_text: `${location} is not open for ${meal} today.`
-      })
+      });
     }
 
     getItemsGroupedByStation(nameToLocationObj[location], meal, date).then(items => {
@@ -105,15 +104,15 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
               }
           }
         ],
-        "payload": {
-          "google": {
-            "expectUserResponse": true,
-            "richResponse": {
-              "items": [
+        'payload': {
+          'google': {
+            'expectUserResponse': true,
+            'richResponse': {
+              'items': [
                 {
-                  "simpleResponse": {
-                    "displayText": `Here are all the stations for ${meal} at ${location}.`,
-                    "textToSpeech": `Here are all the stations for ${meal} at ${location}.`
+                  'simpleResponse': {
+                    'displayText': `Here are all the stations for ${meal} at ${location}.`,
+                    'textToSpeech': `Here are all the stations for ${meal} at ${location}.`
                   }
                 }
               ]
@@ -125,14 +124,14 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
       if (err.message === ERROR_MESSAGES.LOCATION_NOT_FOUND) {
         res.json({
           fulfillment_text: ERROR_MESSAGES.LOCATION_NOT_FOUND
-        })
+        });
       } else if (err.message === ERROR_MESSAGES.MEAL_WEEK_NOT_FOUND) {
         res.json({
           fulfillment_text: ERROR_MESSAGES.MEAL_WEEK_NOT_FOUND
         });
       }
     });
-  },
+  }
 
   // 'Meals.stationMenu': (req, res) => {
   //   const queryResult = req.body.queryResult;
@@ -194,7 +193,7 @@ const getStations = (date, period, json) => {
   const time = date.format(YEAR_MONTH_DAY_FORMAT);
   const stationsAdded = {};
   return json.map(attribute => {
-    console.log('attribute=',attribute);
+    console.log('attribute=', attribute);
     const station = attribute['station'];
     if (attribute['menudate'] === time && attribute['meal'] === period && !stationsAdded[station]) {
       stationsAdded[station] = 1;

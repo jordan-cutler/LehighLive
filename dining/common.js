@@ -1,8 +1,7 @@
-
 const moment = require('moment');
 const HOUR_MINUTE_FORMAT = 'h:mma';
 const DAY_OF_WEEK_TOKEN = 'ddd';
-const DATE_FROM_REQUEST_FORMAT = "YYYY-MM-DD";
+const DATE_FROM_REQUEST_FORMAT = 'YYYY-MM-DD';
 
 const RATHBONE_DIALOGFLOW_TITLE = 'Rathbone';
 const CORT_DIALOGFLOW_TITLE = 'Cort';
@@ -58,10 +57,10 @@ const extractTodaysDayAndTimeRangeFromTimeRanges = (timeRanges) => {
     const daysRange = timeRange.substring(0, timeRange.indexOf(dayRangeAndTimeRangeSeparator)).trim();
     const daySeparator = '-';
     const daysOfRange = daysRange.split(daySeparator).map(day => day.substring(0, 3));
-    const { startTime , endTime } = convertTimeRangeToStartAndEndTimeForTodayAdjustedForAmPm(timeRange);
-    console.log('TIMERANGE=',timeRange);
-    console.log('STARTIME=',startTime);
-    console.log('ENDTIME=',endTime);
+    const {startTime, endTime} = convertTimeRangeToStartAndEndTimeForTodayAdjustedForAmPm(timeRange);
+    console.log('TIMERANGE=', timeRange);
+    console.log('STARTIME=', startTime);
+    console.log('ENDTIME=', endTime);
     return isNowBetweenStartAndEndTime(daysOfRange, startTime, endTime);
   });
   if (todaysRange) {
@@ -77,7 +76,9 @@ const isNowBetweenStartAndEndTime = (daysOfRangeArray, startTimeOfRangeAdjustedF
   if (daysOfRangeArray.length > 1) {
     const startDay = moment(daysOfRangeArray[0], DAY_OF_WEEK_TOKEN);
     const endDay = moment(daysOfRangeArray[1], DAY_OF_WEEK_TOKEN);
-    if (endDay.isBefore(startDay)) endDay.add(1, 'week');
+    if (endDay.isBefore(startDay)) {
+      endDay.add(1, 'week');
+    }
     const inclusiveDayToken = '[]';
     const lastDayInRangeCrossedPastMidnight = isOneDayBefore(endDay, endTimeOfRangeAdjustedForAmPm);
     const dayIsWithinRange = now.isBetween(startDay, endDay, 'day', inclusiveDayToken);
@@ -93,10 +94,10 @@ const isNowBetweenStartAndEndTime = (daysOfRangeArray, startTimeOfRangeAdjustedF
 
 // STRING LOOKS LIKE THIS = Mon-Thurs: 8:00am-7:00pm OR Fri: 8:00am - 1:30pm
 const convertTimeRangeToStartAndEndTimeForTodayAdjustedForAmPm = (timeRange) => {
-  const { startDay, endDay } = extractStartAndEndDayFromDayAndTimeRange(timeRange);
+  const {startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange);
 
   // 7:30am. For now we just assume we're being passed the current day's time range
-  const { startTime, endTime } = extractStartAndEndTimeFromDayAndTimeRange(timeRange);
+  const {startTime, endTime} = extractStartAndEndTimeFromDayAndTimeRange(timeRange);
   adjustDatesBasedOnAmPm(startTime, endTime, startDay, endDay);
 
   return {
@@ -166,7 +167,7 @@ const adjustDatesForAmAmCase = (startTime, endTime, startDay, endDay) => {
   // because the range is actually saying Monday 10:30AM to 2:00AM Tuesday. We need to adjust.
   // If we're within midnight to 2:00AM range, our start time is ahead of where it should be by a day so we need to subtract from start time.
   const onRightSideOfRange = getCurrentHour() <= endTime.hours() && moment().isBetween(moment(startDay).add(1, 'day'), moment(endDay).add(1, 'day'));
-  console.log('onrightside=',onRightSideOfRange);
+  console.log('onrightside=', onRightSideOfRange);
   const singleDayObject = {days: 1};
   if (onRightSideOfRange) {
     startTime.subtract(singleDayObject);
