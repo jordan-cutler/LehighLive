@@ -36,7 +36,7 @@ const nameToLocationObj = {
 };
 
 const ERROR_MESSAGES = {
-  MEAL_WEEK_NOT_FOUND: 'Couldn\'t find a location with that name',
+  MEAL_WEEK_NOT_FOUND: 'Lehigh hasn\'t posted data for that yet',
   LOCATION_NOT_FOUND: 'Couldn\'t find a location with that name'
 };
 
