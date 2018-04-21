@@ -22,7 +22,7 @@ const busAbbr = {
 const TimeTableURL = 'http://buses.lehigh.edu/scripts/routestoptimes.php?format=json';
 
 const makeCORRequest = (url, callback) => {
-  var options = {
+  const options = {
     method: 'GET',
     url: url,
     qs: {format: 'json'},
@@ -63,7 +63,7 @@ function getArrival(timeTable, bus, dest) {
 
   const stops = timeTable[routeToKey[bus]]['stops'];
 
-  for (var stop in stops) {
+  for (let stop in stops) {
     const stopInfo = stops[stop];
     if (stopInfo.name == dest) {
       return stopInfo.arrival;
@@ -95,29 +95,29 @@ function getInterval(timeTable, bus) {
   // Regex is used to extract the time information
   // We look for a loop to determine the interval of the bus
 
-  var visitedStops = [];
-  var stopTimes = [];
+  const visitedStops = [];
+  const stopTimes = [];
 
-  var r = false;
+  let r = false;
   Object.keys(schedule).forEach(function(key) {
-    var descRegex = /Departs ([a-zA-Z\s]*) at ([0-9]{1,2}):([0-9]{2}) ([PMA]{2})/g;
+    const descRegex = /Departs ([a-zA-Z\s]*) at ([0-9]{1,2}):([0-9]{2}) ([PMA]{2})/g;
 
     // If we have found the interval already then ignore the loop
     if (r != false) {
       return;
     }
 
-    var desc = schedule[key];
-    var matches = descRegex.exec(desc);
+    const desc = schedule[key];
+    const matches = descRegex.exec(desc);
 
     if (matches != null) {
-      var stop = matches[1];
+      const stop = matches[1];
 
       // convert hours into 24 hour clock
-      var hour = parseInt(matches[2]) + 12 * (matches[4] == 'PM' ? 1 : 0);
-      var minute = parseInt(matches[3]);
+      const hour = parseInt(matches[2]) + 12 * (matches[4] == 'PM' ? 1 : 0);
+      const minute = parseInt(matches[3]);
 
-      var stopIndex = -1;
+      let stopIndex = -1;
       for (var i = 0; i < visitedStops.length; i++) {
         if (visitedStops[i] == stop) {
           stopIndex = i;
@@ -126,16 +126,16 @@ function getInterval(timeTable, bus) {
       }
 
       if (stopIndex != -1) {
-        var timeIndex = 2 * stopIndex;
-        var hour0 = stopTimes[timeIndex];
-        var minute0 = stopTimes[timeIndex + 1];
+        const timeIndex = 2 * stopIndex;
+        const hour0 = stopTimes[timeIndex];
+        const minute0 = stopTimes[timeIndex + 1];
 
-        var d0 = new Date();
+        const d0 = new Date();
         d0.setHours(hour0, minute0);
-        var d1 = new Date();
+        const d1 = new Date();
         d1.setHours(hour, minute);
 
-        var dT = d1.getTime() - d0.getTime();
+        const dT = d1.getTime() - d0.getTime();
 
         r = dT / (60 * 1000);
         return;
@@ -156,8 +156,8 @@ function getInterval(timeTable, bus) {
 }
 
 function getNextStops(data, bus) {
-  var stops = [];
-  Object.keys(data).foreach(function(key) {
+  const stops = [];
+  Object.keys(data).forEach(function(key) {
     if (busData[key].key == busAbbr[bus]) {
       if (busData[key].currentstop != '') {
         stops.push(busData[key].currentstop);
@@ -179,20 +179,12 @@ const CONNTECTIVITY_ISSUES_FULLFILLMENT = 'I\'m having trouble getting the bus r
 
 
 const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
-  'Location': (req, res) => {
-    const app = new DialogflowApp({req, res});
-    if (app.isPermissionGranted()) {
-      app.tell('You have granted permission');
-    } else {
-      app.askForPermission('To locate you', app.SupportedPermissions.DEVICE_PRECISE_LOCATION);
-    }
-  },
   'Destination': (req, res) => {
     const bus = req.body.queryResult.parameters.bus;
     const dest = req.body.queryResult.parameters.destination;
 
     getTimeTable(function(error, response, timeTable) {
-      var fullfillment = null;
+      let fullfillment = null;
       if (error != null) {
         fullfillment = CONNTECTIVITY_ISSUES_FULLFILLMENT;
       }
@@ -225,8 +217,8 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     });
   },
   'FromTo': (req, res) => {
-    var origin = req.body.queryResult.parameters.origin;
-    var dest = req.body.queryResult.parameters.destination;
+    const origin = req.body.queryResult.parameters.origin;
+    const dest = req.body.queryResult.parameters.destination;
     if (origin == dest) {
       res.json({
         fulfillment_text: 'You don\'t need a bus!'
@@ -235,23 +227,23 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     }
 
     getTimeTable(function(error, response, timeTable) {
-      var fullfillment;
+      let fullfillment;
 
       if (error != null) {
         fullfillment = CONNTECTIVITY_ISSUES_FULLFILLMENT;
       } else {
-        var buses = [];
+        const buses = [];
 
         Object.keys(timeTable).forEach(function(key) {
-          var bus = timeTable[key].name;
+          const bus = timeTable[key].name;
           if (busGoesTo(timeTable, bus, dest) && busGoesTo(timeTable, bus, origin)) {
             buses.push(bus);
           }
         });
 
-        if (buses.length == 0) {
+        if (buses.length === 0) {
           fullfillment = 'There is no bus from ' + origin + ' to ' + dest;
-        } else if (buses.length == 1) {
+        } else if (buses.length === 1) {
           fullfillment = 'To get to ' + dest + ', you can take the ' + buses[0] + ' bus';
         } else {
           fullfillment = 'To get to ' + dest + ', you can take either the ' + buses[0] + ' bus or the ' + buses[1] + ' bus';
@@ -265,21 +257,21 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
   },
   'Interval': (req, res) => {
     getTimeTable(function(error, response, timeTable) {
-      var fullfillment;
+      let fullfillment;
 
       if (error != null) {
         fullfillment = CONNTECTIVITY_ISSUES_FULLFILLMENT;
       } else {
-        var bus = req.body.queryResult.parameters.bus;
-        var dest = req.body.queryResult.parameters.dest;
+        const bus = req.body.queryResult.parameters.bus;
+        const dest = req.body.queryResult.parameters.dest;
 
-        var arrivalTime = getArrival(timeTable, bus, dest);
+        const arrivalTime = getArrival(timeTable, bus, dest);
         if (!arrivalTime) {
           fullfillment = 'The ' + bus + ' bus does not go to ' + dest;
         } else if (arrivalTime == '-') {
           fullfillment = 'The ' + bus + ' bus is not running right now.';
         } else {
-          var interval = Math.floor(getInterval(timeTable, bus));
+          const interval = Math.floor(getInterval(timeTable, bus));
           if (arrivalTime == 'Arriving Soon'
             || arrivalTime == 'At Stop'
             || arrivalTime == 'Just Departed') {
@@ -299,10 +291,10 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     });
   },
   'Schedule': (req, res) => {
-    var bus = req.body.queryResult.parameters.bus;
+    const bus = req.body.queryResult.parameters.bus;
 
     getTimeTable(function(error, response, timeTable) {
-      var fullfillment;
+      let fullfillment;
       if (error != null) {
         fullfillment = CONNTECTIVITY_ISSUES_FULLFILLMENT;
       } else {
@@ -311,13 +303,13 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
         } else {
           const schedule = timeTable[routeToKey[bus]]['schedule'];
 
-          var i = 0;
+          let i = 0;
           fullfillment = '';
           Object.keys(schedule).forEach(function(key) {
             if (i > 2) {
               return;
             }
-            var desc = schedule[key];
+            let desc = schedule[key];
             desc = desc.replace('<strong>', '');
             desc = desc.replace('</strong>', '');
             desc = desc.toLowerCase();
@@ -340,7 +332,7 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     });
   },
   'Location': (req, res) => {
-    var bus = req.body.queryResult.parameters.bus;
+    const bus = req.body.queryResult.parameters.bus;
 
     getBusData(function(error, respone, busData) {
       if (error != null) {
@@ -349,13 +341,13 @@ const BUS_FUNCTION_ACTION_NAME_TO_FUNCTION = {
         });
       } else {
         getTimeTable(function(error, response, timeTable) {
-          var fullfillment;
+          let fullfillment;
           if (error != null) {
             fullfillment = CONNTECTIVITY_ISSUES_FULLFILLMENT;
           } else {
-            var times = [];
-            var stops = getNextStops(busData, bus);
-            for (var i = 0; i < stops.length; i++) {
+            const times = [];
+            const stops = getNextStops(busData, bus);
+            for (let i = 0; i < stops.length; i++) {
               const arrival = getArrival(timeTable, bus, stops[i]);
               if (arrival != '-' || !arrival) {
                 times.push(arrival);
