@@ -3,38 +3,18 @@ const momentDurationFormatSetup = require("moment-duration-format");
 const common = require('./common');
 momentDurationFormatSetup(moment);
 
-const json = require('../testdata/formatLocations');
-
-const allLocations = json.locations.category.map(element => {
-  return element.location;
-}).reduce((acc, val) => acc.concat(val), []);
-
-const getAllLocations = () => {
-  return allLocations;
-};
-
-const getRequestedLocationObject = (locationName) => {
-    return getAllLocations().find(location => {
-        const locationNames = new Set([location.title, location.fulltitle, location.mapsearch]);
-        return locationNames.has(locationName);
-    });
-};
-
-const getLocationHoursStringByName = (locationName) => {
-  return getRequestedLocationObject(locationName).hours;
-};
-
 const minutesAsHoursAndMinutes = (minutes) => {
   const prettyPrintHoursAndMinutesFormat = "h [hours and] m [minutes]";
   return moment.duration(minutes, "minutes").format(prettyPrintHoursAndMinutesFormat);
 };
 
 const getOpenLocations = () => {
-  return getAllLocations().filter(location => isOpen(location, moment()));
+  return common.getAllLocations().filter(location => isOpen(location, moment()));
 };
 
 const getLocationHoursInfo = (locationName, time = moment()) => {
-  const locationTimes = common.getStartAndEndTimeForToday(getLocationHoursStringByName(locationName));
+  const locationTimes = common.getStartAndEndTimeForToday(common.getLocationHoursStringByName(locationName));
+  console.log(locationTimes);
   if (!locationTimes) {
     return {
       name: locationName,
@@ -52,8 +32,8 @@ const getLocationHoursInfo = (locationName, time = moment()) => {
     isOpen: time.isBetween(startTime, endTime),
     minutesUntilClose: moment.duration(endTime.diff(time)).asMinutes(),
     minutesUntilOpen: moment.duration(startTime.diff(time)).asMinutes(),
-    openTime: startTime.format(common.hourMinuteFormat),
-    closeTime: endTime.format(common.hourMinuteFormat),
+    openTime: startTime.format(common.HOUR_MINUTE_FORMAT),
+    closeTime: endTime.format(common.HOUR_MINUTE_FORMAT),
     isClosedForEntireDay: false
   }
 };
@@ -66,32 +46,40 @@ const isOpen = (location, time) => {
 
 const getLocationHoursInfoFromRequest = (request) => {
   const locationName = request.body.queryResult.parameters.location;
-  const dateRequested = moment(request.body.queryResult.parameters.date, "YYYY-MM-DD");
+  const dateRequested = moment(request.body.queryResult.parameters.date, common.DATE_FROM_REQUEST_FORMAT);
   return getLocationHoursInfo(locationName, moment());
+};
+
+const getResponseTextIfDateSpecified = (request) => {
+  const dateRequested = request.body.queryResult.parameters.date;
+  if (dateRequested && !moment().isSame(moment(dateRequested, common.DATE_FROM_REQUEST_FORMAT), 'day')) {
+    const locationName = request.body.queryResult.parameters.location;
+    return (
+      `
+        The hours for ${locationName} are: \n 
+        ${common.getLocationHoursStringByName(locationName)}
+        `
+    );
+  }
+  return undefined;
 };
 
 const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
   'openlocations': (req, res) => {
-    // const locationObjectRequested = getRequestedLocation(req.body.queryResult.parameters.locationName);
-
     res.json({
       fulfillment_text: (
         `Here's what's open right now: \n
-        ${getOpenLocations().map(location => location.title).join('\n')}
+        ${getOpenLocations().map(location => location.title).join(', ')}
         `
       )
     });
   },
 
   'isopen': (req, res) => {
-    const dateRequested = req.body.queryResult.parameters.date;
-    if (dateRequested && !moment().isSame(moment(dateRequested, "YYYY-MM-DD"), 'day')) {
-      const locationName = req.body.queryResult.parameters.location;
+    const fulfillmentTextIfDateSpecified = getResponseTextIfDateSpecified(req);
+    if (fulfillmentTextIfDateSpecified) {
       res.json({
-        fulfillment_text: `
-        The hours for ${locationName} are: \n 
-        ${getLocationHoursStringByName(locationName)}
-        `
+        fulfillment_text: fulfillmentTextIfDateSpecified
       });
       return;
     }
@@ -114,14 +102,10 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
   },
 
   'isclosed': (req, res) => {
-    const dateRequested = req.body.queryResult.parameters.date;
-    if (dateRequested && !moment().isSame(moment(dateRequested, "YYYY-MM-DD"), 'day')) {
-      const locationName = req.body.queryResult.parameters.location;
+    const fulfillmentTextIfDateSpecified = getResponseTextIfDateSpecified(req);
+    if (fulfillmentTextIfDateSpecified) {
       res.json({
-        fulfillment_text: `
-        The hours for ${locationName} are: \n 
-        ${getLocationHoursStringByName(locationName)}
-        `
+        fulfillment_text: fulfillmentTextIfDateSpecified
       });
       return;
     }
@@ -189,7 +173,7 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     if (isClosedForEntireDay) {
       responseText = `${name} is closed for the entire day.`;
     } else {
-      responseText = `sThe hours for ${name} today are ${openTime}-${closeTime}`;
+      responseText = `The hours for ${name} today are ${openTime}-${closeTime}`;
     }
     res.json({
       fulfillment_text: responseText
