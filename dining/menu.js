@@ -161,7 +161,6 @@ const getStations = (date, period, json) => {
 
 const generateMenuUrlByLocationAndDate = (location, date) => {
   const xmlFile = 'http://mc.lehigh.edu/services/dining/resident.xml';
-  //return new Promise((resolve, reject) => {
   const options = {
     uri: xmlFile,
     transform: (body) => {
@@ -198,7 +197,6 @@ const generateMenuUrlByLocationAndDate = (location, date) => {
       const weekString = menunameSplit[1];
       return `http://mc.lehigh.edu/services/dining/resident/${menuName}/${weekString}.xml`;
     });
-  //});
 };
 
 const getStationMenu = (location, date, period, station, json) => {
