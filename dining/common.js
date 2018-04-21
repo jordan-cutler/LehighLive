@@ -16,7 +16,7 @@ const isResidentDiningLocation = (locationName) => RESIDENT_DINING_LOCATIONS.has
 const getCurrentHour = () => moment().hours();
 const getCurrentDay = () => moment().days();
 
-const json = require('./formatLocations');
+const json = require('./data/formatLocations');
 
 const allLocations = json.locations.category.map(element => {
   return element.location;

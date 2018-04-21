@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "actions-on-google": "^1.10.0",
+    "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
     "fs": "0.0.1-security",
@@ -20,6 +21,7 @@
     "moment-duration-format": "^2.2.2",
     "npm": "^5.8.0",
     "request": "^2.85.0",
+    "request-promise": "^4.2.2",
     "twix": "^1.2.1",
     "unirest": "^0.5.1",
     "xml2js": "^0.4.19",

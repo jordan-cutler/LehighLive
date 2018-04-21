@@ -1,5 +1,5 @@
 const moment = require('moment');
-const unirest = require('unirest');
+const rp = require('request-promise');
 const parser = require('xml2json');
 const common = require('./common');
 
@@ -7,9 +7,7 @@ const YEAR_MONTH_DAY_FORMAT = 'YYYY-MM-DD';
 const DINNER_PERIOD = 'Dinner';
 const LUNCH_PERIOD = 'Lunch';
 
-const REQUEST_HEADERS = {
-  'Cache-Control': 'no-cache'
-};
+const REQUEST_HEADERS = {'origin': 'Android', 'User-Agent': 'Android'};
 // title is used to match with the location title here http://mc.lehigh.edu/services/dining/resident.xml
 const RATHBONE = {
   title: 'Rathbone',
@@ -40,35 +38,41 @@ const ERROR_MESSAGES = {
   LOCATION_NOT_FOUND: 'Couldn\'t find a location with that name'
 };
 
+const generateOptions = (url, transform) => {
+  return {
+    uri: url,
+    transform: transform,
+    headers: REQUEST_HEADERS
+  }
+};
+
 const getItemsGroupedByStation = (location, meal, date) => {
+  const transformResponseData = (body) => {
+    const jsonText = parser.toJson(body);
+    const item = JSON.parse(jsonText)['VFPData']['weeklymenu'];
+    return getStations(date, meal, item);
+  };
+
   return generateMenuUrlByLocationAndDate(location, date).then(menuUrl => {
-    console.log('menuurl=', menuUrl);
-    return new Promise((resolve, reject) => {
-      unirest('GET', menuUrl)
-        .headers(REQUEST_HEADERS)
-        .end((xmlData) => {
-          const jsonText = parser.toJson(xmlData.body);
-          const item = JSON.parse(jsonText)['VFPData']['weeklymenu'];
-          const stations = getStations(date, meal, item);
-          console.log('stations=', stations);
-          const itemsGroupedByStation = stations.map(station => {
-            return {
-              'title': station,
-              'description': getStationMenu(location.title, date, meal, station, item).map(menuItem => {
-                return '• ' + menuItem;
-              }).join('\n'),
-              'image': {
-                'imageUri': location.imageUrl,
-                'accessibilityText': location.displayTitle
-              },
-              'info': {
-                'key': station
-              }
-            };
-          });
-          return resolve(itemsGroupedByStation);
+    return rp(generateOptions(menuUrl, transformResponseData))
+      .then(stations => {
+        console.log('stations=', stations);
+        return stations.map(station => {
+          return {
+            'title': station,
+            'description': getStationMenu(location.title, date, meal, station, item).map(menuItem => {
+              return '• ' + menuItem;
+            }).join('\n'),
+            'image': {
+              'imageUri': location.imageUrl,
+              'accessibilityText': location.displayTitle
+            },
+            'info': {
+              'key': station
+            }
+          };
         });
-    });
+      });
   });
 };
 
@@ -157,39 +161,44 @@ const getStations = (date, period, json) => {
 
 const generateMenuUrlByLocationAndDate = (location, date) => {
   const xmlFile = 'http://mc.lehigh.edu/services/dining/resident.xml';
-  return new Promise((resolve, reject) => {
-    unirest('GET', xmlFile)
-      .headers(REQUEST_HEADERS)
-      .end((result) => {
-        if (result.error) {
-          return reject(result.error);
-        }
-        const jsonText = parser.toJson(result.body);
-        const parsed = JSON.parse(jsonText);
-        const locations = parsed.menu.location;
-        const locationObj = locations.find(locObj => {
-          return locObj.title === location.title;
-        });
-        if (!locationObj) {
-          return reject(new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND));
-        }
-        const meals = locationObj.meal;
-        const mealObj = meals.find(meal => {
-          const mealWeekStartAndEnd = meal.title.split(' ').join('').split('-');
-          const MEAL_WEEK_MONTH_DAY_YEAR_FORMAT = 'MMMDDYYYY';
-          const mealWeekStart = moment(mealWeekStartAndEnd[0], MEAL_WEEK_MONTH_DAY_YEAR_FORMAT);
-          const mealWeekEnd = moment(mealWeekStartAndEnd[1], MEAL_WEEK_MONTH_DAY_YEAR_FORMAT);
-          return date.isBetween(mealWeekStart, mealWeekEnd, 'day', '[]');
-        });
-        if (!mealObj) {
-          return reject(new Error(ERROR_MESSAGES.MEAL_WEEK_NOT_FOUND));
-        }
-        const menunameSplit = mealObj.menuname.split('/');
-        const menuName = menunameSplit[0];
-        const weekString = menunameSplit[1];
-        return resolve(`http://mc.lehigh.edu/services/dining/resident/${menuName}/${weekString}.xml`);
+  //return new Promise((resolve, reject) => {
+  const options = {
+    uri: xmlFile,
+    transform: (body) => {
+      console.log(body);
+      const jsonText = parser.toJson(body);
+      const parsed = JSON.parse(jsonText);
+      return parsed.menu.location;
+    },
+    headers: REQUEST_HEADERS
+  };
+  return rp(options)
+    .then((locations) => {
+      // const locations = parsed.menu.location;
+      console.log(locations);
+      const locationObj = locations.find(locObj => {
+        return locObj.title === location.title;
       });
-  });
+      if (!locationObj) {
+        throw new Error(ERROR_MESSAGES.LOCATION_NOT_FOUND);
+      }
+      const meals = locationObj.meal;
+      const mealObj = meals.find(meal => {
+        const mealWeekStartAndEnd = meal.title.split(' ').join('').split('-');
+        const MEAL_WEEK_MONTH_DAY_YEAR_FORMAT = 'MMMDDYYYY';
+        const mealWeekStart = moment(mealWeekStartAndEnd[0], MEAL_WEEK_MONTH_DAY_YEAR_FORMAT);
+        const mealWeekEnd = moment(mealWeekStartAndEnd[1], MEAL_WEEK_MONTH_DAY_YEAR_FORMAT);
+        return date.isBetween(mealWeekStart, mealWeekEnd, 'day', '[]');
+      });
+      if (!mealObj) {
+        throw new Error(ERROR_MESSAGES.MEAL_WEEK_NOT_FOUND);
+      }
+      const menunameSplit = mealObj.menuname.split('/');
+      const menuName = menunameSplit[0];
+      const weekString = menunameSplit[1];
+      return `http://mc.lehigh.edu/services/dining/resident/${menuName}/${weekString}.xml`;
+    });
+  //});
 };
 
 const getStationMenu = (location, date, period, station, json) => {
