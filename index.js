@@ -11,13 +11,11 @@ app.use(
 
 app.use(bodyParser.json());
 
-const busModule = require('./bus');
-const proModule = require('./professor');
-const evtModule = require('./evt');
+const busModule = require('./bus/bus');
+const evtModule = require('./events/evt');
 const dinModule = require('./dining/din');
 const modules = {
   'BUS': busModule,
-  'PRO': proModule,
   'EVT': evtModule,
   'DIN': dinModule
 };
