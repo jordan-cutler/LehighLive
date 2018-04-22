@@ -33,12 +33,8 @@ const getLocationHoursStringByName = (locationName) => {
   return getRequestedLocationObject(locationName).hours;
 };
 
-const getStartAndEndTimeForToday = (hoursString) => {
-  return getStartAndEndTimeForSpecifiedDate(hoursString, moment());
-};
-
 // STRING LOOKS LIKE THIS = Mon-Thurs: 8:00am-7:00pm, Fri: 8:00am - 1:30pm
-const getStartAndEndTimeForSpecifiedDate = (hoursString, date) => {
+const getStartAndEndTimeBasedOnDate = (hoursString, date) => {
   const timeRangesSeparator = ',';
   // [ 'Mon-Thu: 7:00am-7:00pm', ' Fri: 7:00am-2:00pm' ]
   const timeRanges = hoursString.split(timeRangesSeparator).map(range => range.trim());
@@ -61,7 +57,7 @@ const getStartAndEndTimeForSpecifiedDate = (hoursString, date) => {
 };
 
 const getStartAndEndTimesFromTimeRange = (timeRange) => {
-  const { startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange);
+  const {startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange);
   const {startTime: unadjustedStartTime, endTime: unadjustedEndTime} = extractStartAndEndTimeFromDayAndTimeRange(timeRange);
 
   return getStartAndEndTimesByAmPmCases(startDay, endDay, unadjustedStartTime, unadjustedEndTime);
@@ -86,7 +82,7 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
       times.push({
         startTime: moment(unadjustedStartTime).day(currentDayInRange.days()),
         endTime: moment(unadjustedEndTime).day(moment(currentDayInRange).days()).add(1, 'day')
-      })
+      });
     });
   }
   else if (isAm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
@@ -144,7 +140,7 @@ const extractStartAndEndTimeFromDayAndTimeRange = (timeRange) => {
 };
 
 module.exports = {
-  getStartAndEndTimeForToday: getStartAndEndTimeForToday,
+  getStartAndEndTimeBasedOnDate: getStartAndEndTimeBasedOnDate,
   isResidentDiningLocation: isResidentDiningLocation,
   getRequestedLocationObject: getRequestedLocationObject,
   getAllLocations: getAllLocations,

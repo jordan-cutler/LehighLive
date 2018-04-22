@@ -213,7 +213,7 @@ const isOpenDuringPeriod = (location, period) => {
   const startLunchTime = moment('10:30am', common.HOUR_MINUTE_FORMAT);
   const endLunchTime = moment('2:00pm', common.HOUR_MINUTE_FORMAT);
   const endBreakfastTime = moment('9:45am', common.HOUR_MINUTE_FORMAT);
-  const locationTimes = common.getStartAndEndTimeForToday(location.hours);
+  const locationTimes = common.getStartAndEndTimeBasedOnDate(location.hours, moment());
   const {startTime, endTime} = locationTimes;
   if (period === DINNER_PERIOD) {
     return startDinnerTime.isBefore(endTime);

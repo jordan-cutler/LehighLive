@@ -13,7 +13,7 @@ const getOpenLocations = () => {
 };
 
 const getLocationHoursInfo = (locationName, time = moment()) => {
-  const locationTimes = common.getStartAndEndTimeForToday(common.getLocationHoursStringByName(locationName));
+  const locationTimes = common.getStartAndEndTimeBasedOnDate(common.getLocationHoursStringByName(locationName), time);
   console.log(locationTimes);
   if (!locationTimes) {
     return {
@@ -39,7 +39,7 @@ const getLocationHoursInfo = (locationName, time = moment()) => {
 };
 
 const isOpen = (location, time) => {
-  const locationTimes = common.getStartAndEndTimeForToday(location.hours);
+  const locationTimes = common.getStartAndEndTimeBasedOnDate(location.hours, time);
   if (!locationTimes) {
     return false;
   }
