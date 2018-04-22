@@ -61,10 +61,7 @@ const getStartAndEndTimeForSpecifiedDate = (hoursString, date) => {
 };
 
 const getStartAndEndTimesFromTimeRange = (timeRange) => {
-  const days = extractStartAndEndDayFromDayAndTimeRange(timeRange);
-  let startDay = days.startDay;
-  const endDay = days.endDay;
-
+  const { startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange);
   const {startTime: unadjustedStartTime, endTime: unadjustedEndTime} = extractStartAndEndTimeFromDayAndTimeRange(timeRange);
 
   return getStartAndEndTimesByAmPmCases(startDay, endDay, unadjustedStartTime, unadjustedEndTime);
@@ -75,29 +72,28 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
   const isPm = (momentTime) => momentTime.hours() >= 12;
   const isAm = (momentTime) => momentTime.hours() < 12;
 
-  const currentDayInRangeZ = moment(startDay);
+  const currentDayInRange = moment(startDay);
 
   const runForEachDayInRange = (callback) => {
-    const currentDayInRange = moment(startDay);
     while (currentDayInRange.isSameOrBefore(endDay, 'day')) {
       callback();
       currentDayInRange.add(1, 'day');
     }
   };
-  
+
   if (isPm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
     runForEachDayInRange(() => {
       times.push({
-        startTime: moment(unadjustedStartTime).day(currentDayInRangeZ.days()),
-        endTime: moment(unadjustedEndTime).day(moment(currentDayInRangeZ).days()).add(1, 'day')
+        startTime: moment(unadjustedStartTime).day(currentDayInRange.days()),
+        endTime: moment(unadjustedEndTime).day(moment(currentDayInRange).days()).add(1, 'day')
       })
     });
   }
   else if (isAm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
     runForEachDayInRange(() => {
-      const end = moment(unadjustedEndTime).day(moment(currentDayInRangeZ).days());
+      const end = moment(unadjustedEndTime).day(moment(currentDayInRange).days());
       times.push({
-        startTime: moment(unadjustedStartTime).day(currentDayInRangeZ.days()),
+        startTime: moment(unadjustedStartTime).day(currentDayInRange.days()),
         // 10:00AM - 2:00AM for example. Need to add a day to 2AM
         endTime: unadjustedEndTime.isBefore(unadjustedStartTime) ? (end.add(1, 'day')) : (end)
       });
@@ -109,8 +105,8 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
   ) {
     runForEachDayInRange(() => {
       times.push({
-        startTime: moment(unadjustedStartTime).day(currentDayInRangeZ.days()),
-        endTime: moment(unadjustedEndTime).day(moment(currentDayInRangeZ).days())
+        startTime: moment(unadjustedStartTime).day(currentDayInRange.days()),
+        endTime: moment(unadjustedEndTime).day(moment(currentDayInRange).days())
       });
     });
   }
