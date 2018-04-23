@@ -42,7 +42,7 @@ const isOpen = (location, time) => {
 const getLocationHoursInfoFromRequest = (request) => {
   const locationName = request.body.queryResult.parameters.location;
   const dateRequested = moment(request.body.queryResult.parameters.date, common.DATE_FROM_REQUEST_FORMAT);
-  return getLocationHoursInfo(locationName, moment());//moment("01:59am", "hh:mma"));
+  return getLocationHoursInfo(locationName, moment());
 };
 
 const getResponseTextIfDateSpecified = (request) => {

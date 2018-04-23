@@ -39,7 +39,7 @@ const getStartAndEndTimeBasedOnDate = (hoursString, date) => {
   // [ 'Mon-Thu: 7:00am-7:00pm', ' Fri: 7:00am-2:00pm' ]
   const timeRanges = hoursString.split(timeRangesSeparator).map(range => range.trim());
   for (const timeRange of timeRanges) {
-    const startAndEndTimes = getStartAndEndTimesFromTimeRange(timeRange, date.week());
+    const startAndEndTimes = getStartAndEndTimesForTimeRangeAndDate(timeRange, date);
     const startAndEndTime = startAndEndTimes.find(({startTime, endTime}) => {
       console.log('START=', startTime);
       console.log('NOW=', moment(date));
@@ -50,15 +50,14 @@ const getStartAndEndTimeBasedOnDate = (hoursString, date) => {
       const dateHasntMovedPastEndTimeOfRange = date.isBefore(endTime);
       return dateIsOnSameDayAsRange && dateHasntMovedPastEndTimeOfRange;
     });
-    console.log('STARTANDEND=', startAndEndTime);
     if (startAndEndTime) {
       return startAndEndTime;
     }
   }
 };
 
-const getStartAndEndTimesFromTimeRange = (timeRange, weekOfDate) => {
-  const {startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange, weekOfDate);
+const getStartAndEndTimesForTimeRangeAndDate = (timeRange, date) => {
+  const {startDay, endDay} = extractStartAndEndDayFromDayAndTimeRange(timeRange, date);
   const {startTime: unadjustedStartTime, endTime: unadjustedEndTime} = extractStartAndEndTimeFromDayAndTimeRange(timeRange);
 
   return getStartAndEndTimesByAmPmCases(startDay, endDay, unadjustedStartTime, unadjustedEndTime);
@@ -70,9 +69,6 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
   const isAm = (momentTime) => momentTime.hours() < 12;
 
   const currentDayInRange = moment(startDay);
-  if (endDay.days() === 6) {
-    console.log('hey');
-  }
   const runForEachDayInRange = (callback) => {
     while (currentDayInRange.isSameOrBefore(endDay, 'day')) {
       callback();
@@ -80,22 +76,27 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
     }
   };
   const applyHoursMinutesAndSecondsToFirstFromSecond = (momentee, momenter) => {
-    return moment(momentee).hour(momenter.hours()).minute(momenter.minutes()).second(momenter.seconds());
+    const hms = {
+      hour: momenter.hours(),
+      minute: momenter.minutes(),
+      second: momenter.seconds()
+    };
+    return momentee.set(hms);
   };
 
   if (isPm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
     runForEachDayInRange(() => {
       times.push({
-        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),//moment(unadjustedStartTime).day(currentDayInRange.days()),
-        endTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime).add(1, 'day')//moment(unadjustedEndTime).day(moment(currentDayInRange).days()).add(1, 'day')
+        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),
+        endTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime).add(1, 'day')
       });
     });
   }
   else if (isAm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
     runForEachDayInRange(() => {
-      const end = applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime);//moment(endDay).hour(unadjustedEndTime.hours()).minute(unadjustedEndTime.minutes());//moment(unadjustedEndTime).day(moment(currentDayInRange).days());
+      const end = applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime);
       times.push({
-        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),//moment(startDay).hour(unadjustedStartTime.hours()).minute(unadjustedStartTime.minutes()),//moment(unadjustedStartTime).day(currentDayInRange.days()),
+        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),
         // 10:00AM - 2:00AM for example. Need to add a day to 2AM
         endTime: unadjustedEndTime.isBefore(unadjustedStartTime) ? (end.add(1, 'day')) : (end)
       });
@@ -107,32 +108,27 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
   ) {
     runForEachDayInRange(() => {
       times.push({
-        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),//moment(unadjustedStartTime).day(currentDayInRange.days()),
-        endTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime)//moment(unadjustedEndTime).day(moment(currentDayInRange).days())
+        startTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedStartTime),
+        endTime: applyHoursMinutesAndSecondsToFirstFromSecond(currentDayInRange, unadjustedEndTime)
       });
     });
   }
   return times;
 };
 
-const extractStartAndEndDayFromDayAndTimeRange = (timeRange, week) => {
+const extractStartAndEndDayFromDayAndTimeRange = (timeRange, date) => {
   const split = timeRange.split(' ').join('').split(':')[0].split('-');
-  const startDay = moment(split[0], DAY_OF_WEEK_TOKEN).week(week);
-  const endDay = moment(split[split.length - 1], DAY_OF_WEEK_TOKEN).week(week);
-  console.log('ENDDAYDAYS=', endDay.days());
-  if (moment().days() === 0 && endDay.days() === 6) {
-    console.log('SUBTRACTING************************');
-    console.log('BEFORE=',endDay);
+  const startDay = moment(split[0], DAY_OF_WEEK_TOKEN).week(date.weeks());
+  const endDay = moment(split[split.length - 1], DAY_OF_WEEK_TOKEN).week(date.weeks());
+  if (date.days() === 0 && endDay.days() === 6) {
     startDay.subtract(1, 'week');
     endDay.subtract(1, 'week');
-    console.log('AFTER=',endDay);
-    console.log('ISITTHOUGH?',endDay.isBefore(startDay));
   }
   if (endDay.isBefore(startDay)) {
     endDay.add(1, 'week');
     console.log('AND', endDay);
   }
-  console.log('RETURNING',{
+  console.log('RETURNING', {
     startDay: startDay,
     endDay: endDay
   });
