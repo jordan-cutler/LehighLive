@@ -1,12 +1,5 @@
 const moment = require('moment');
-const momentDurationFormatSetup = require('moment-duration-format');
 const common = require('./common');
-momentDurationFormatSetup(moment);
-
-const minutesAsHoursAndMinutes = (minutes) => {
-  const prettyPrintHoursAndMinutesFormat = 'h [hours and] m [minutes]';
-  return moment.duration(minutes, 'minutes').format(prettyPrintHoursAndMinutesFormat);
-};
 
 const getOpenLocations = () => {
   return common.getAllLocations().filter(location => isOpen(location, moment()));
@@ -49,7 +42,7 @@ const isOpen = (location, time) => {
 const getLocationHoursInfoFromRequest = (request) => {
   const locationName = request.body.queryResult.parameters.location;
   const dateRequested = moment(request.body.queryResult.parameters.date, common.DATE_FROM_REQUEST_FORMAT);
-  return getLocationHoursInfo(locationName, moment());
+  return getLocationHoursInfo(locationName, moment());//moment("01:59am", "hh:mma"));
 };
 
 const getResponseTextIfDateSpecified = (request) => {
@@ -64,6 +57,10 @@ const getResponseTextIfDateSpecified = (request) => {
     );
   }
   return undefined;
+};
+
+const getSingularOrPluralMinutesStringFromNumber = (minutes) => {
+  return minutes !== 1 ? 'minutes' : 'minute';
 };
 
 const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
@@ -88,9 +85,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     const {isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
-      responseText = `Yes, but it's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
+      const minutesUntilCloseFixed = minutesUntilClose.toFixed();
+      responseText = `Yes, but it's closing in ${minutesUntilCloseFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilCloseFixed)}. Better hurry!`;
     } else if (minutesUntilOpen > 0 && minutesUntilOpen <= 30) {
-      responseText = `It's not open now, but it will be in ${minutesUntilOpen.toFixed()} minutes.`;
+      const minutesUntilOpenFixed = minutesUntilOpen.toFixed();
+      responseText = `It's not open now, but it will be in ${minutesUntilOpenFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilOpenFixed)}.`;
     } else if (isOpen) {
       responseText = `Yep! It's open from ${openTime}-${closeTime} today.`;
     } else if (isClosedForEntireDay) {
@@ -114,9 +113,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     const {isOpen, minutesUntilClose, minutesUntilOpen, openTime, closeTime, isClosedForEntireDay} = getLocationHoursInfoFromRequest(req);
     let responseText;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
-      responseText = `No, but it's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
+      const minutesUntilCloseFixed = minutesUntilClose.toFixed();
+      responseText = `No, but it's closing in ${minutesUntilCloseFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilCloseFixed)}. Better hurry!`;
     } else if (minutesUntilOpen > 0 && minutesUntilOpen <= 30) {
-      responseText = `Yes, but it will be open in ${minutesUntilOpen.toFixed()} minutes.`;
+      const minutesUntilOpenFixed = minutesUntilOpen.toFixed();
+      responseText = `Yes, but it will be open in ${minutesUntilOpenFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilOpenFixed)}.`;
     } else if (isOpen) {
       responseText = `It's not closed. It's open from ${openTime}-${closeTime} today.`;
     } else if (isClosedForEntireDay) {
@@ -134,9 +135,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     let responseText;
     const hoursString = `The hours are ${openTime}-${closeTime}`;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
-      responseText = `It's open right now, but it's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
+      const minutesUntilCloseFixed = minutesUntilClose.toFixed();
+      responseText = `It's open right now, but it's closing in ${minutesUntilCloseFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilCloseFixed)}. Better hurry!`;
     } else if (minutesUntilOpen > 0 && minutesUntilOpen <= 30) {
-      responseText = `It opens in ${minutesUntilOpen.toFixed()} minutes. ${hoursString}`;
+      const minutesUntilOpenFixed = minutesUntilOpen.toFixed();
+      responseText = `It opens in ${minutesUntilOpenFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilOpenFixed)}. ${hoursString}`;
     } else if (isOpen) {
       responseText = `It's already open! ${hoursString}`;
     } else if (isClosedForEntireDay) {
@@ -154,9 +157,11 @@ const EVT_FUNCTION_ACTION_NAME_TO_FUNCTION = {
     let responseText;
     const hoursString = `The hours are ${openTime}-${closeTime}`;
     if (minutesUntilClose > 0 && minutesUntilClose <= 45) {
-      responseText = `It's closing in ${minutesUntilClose.toFixed()} minutes. Better hurry!`;
+      const minutesUntilCloseFixed = minutesUntilClose.toFixed();
+      responseText = `It's closing in ${minutesUntilCloseFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilCloseFixed)}. Better hurry!`;
     } else if (minutesUntilOpen > 0 && minutesUntilOpen <= 30) {
-      responseText = `It doesn't close for awhile. It's open in ${minutesUntilOpen.toFixed()} minutes. ${hoursString}`;
+      const minutesUntilOpenFixed = minutesUntilOpen.toFixed();
+      responseText = `It doesn't close for awhile. It's open in ${minutesUntilOpenFixed} ${getSingularOrPluralMinutesStringFromNumber(minutesUntilOpenFixed)}. ${hoursString}`;
     } else if (isClosedForEntireDay) {
       responseText = `${name} is closed for the whole day.`;
     } else if (!isOpen) {
