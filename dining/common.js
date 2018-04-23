@@ -120,18 +120,19 @@ const extractStartAndEndDayFromDayAndTimeRange = (timeRange, date) => {
   const split = timeRange.split(' ').join('').split(':')[0].split('-');
   const startDay = moment(split[0], DAY_OF_WEEK_TOKEN).week(date.weeks());
   const endDay = moment(split[split.length - 1], DAY_OF_WEEK_TOKEN).week(date.weeks());
+  /*
+   If the last day in the range is Saturday, it may extend past like 10:00AM - 2:00AM for example.
+   Need to subtract a week because Sunday is the start of the week and we would have set it to be
+   the Saturday at the end of the week rather than the Saturday that just converted to Sunday because
+   it may be 1:30AM on Sunday or something.
+  */
   if (date.days() === 0 && endDay.days() === 6) {
     startDay.subtract(1, 'week');
     endDay.subtract(1, 'week');
   }
   if (endDay.isBefore(startDay)) {
     endDay.add(1, 'week');
-    console.log('AND', endDay);
   }
-  console.log('RETURNING', {
-    startDay: startDay,
-    endDay: endDay
-  });
   return {
     startDay: startDay,
     endDay: endDay
