@@ -81,7 +81,7 @@ const getStartAndEndTimesByAmPmCases = (startDay, endDay, unadjustedStartTime, u
       minute: momenter.minutes(),
       second: momenter.seconds()
     };
-    return momentee.set(hms);
+    return moment(momentee).set(hms);
   };
 
   if (isPm(unadjustedStartTime) && isAm(unadjustedEndTime)) {
